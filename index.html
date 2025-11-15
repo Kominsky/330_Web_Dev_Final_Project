@@ -10,7 +10,7 @@
     margin: 20px;
   }
 
-  h1, h3, h2{
+  h1, h2, h3 {
     text-align: center;
   }
 
@@ -49,11 +49,23 @@
     position: relative;
   }
 
-  .card img { width: 100%; height: 100%; object-fit: contain; }
+  .card img, .slot img { width: 100%; height: 100%; object-fit: contain; }
 
   .card.used { opacity: 0.5; cursor: not-allowed; }
 
-  .slot img { width: 100%; height: 100%; object-fit: contain; }
+  .tooltip {
+    position: fixed;
+    background: rgba(0,0,0,0.8);
+    color: #fff;
+    padding: 4px 6px;
+    font-size: 12px;
+    border-radius: 4px;
+    white-space: nowrap;
+    z-index: 10;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.05s;
+  }
 </style>
 </head>
 <body>
@@ -63,14 +75,12 @@
 
 <h3>Deck Slots</h3>
 <div id="deck-slots">
-  <!-- 6 normal slots -->
   <div class="slot" data-index="0"></div>
   <div class="slot" data-index="1"></div>
   <div class="slot" data-index="2"></div>
   <div class="slot" data-index="3"></div>
   <div class="slot" data-index="4"></div>
   <div class="slot" data-index="5"></div>
-  <!-- 2 evolution slots -->
   <div class="slot evolution" data-index="6"></div>
   <div class="slot evolution" data-index="7"></div>
 </div>
@@ -80,6 +90,7 @@
 
 <script>
 const deck = new Array(8).fill(null);
+let tooltip = null;
 
 fetch('cards-data.json')
   .then(res => res.json())
@@ -89,6 +100,26 @@ fetch('cards-data.json')
 function initDeckBuilder(cardsData) {
   const deckSlots = document.querySelectorAll('.slot');
   const allCardsDiv = document.getElementById('all-cards');
+// Cards stats displayed in tooltip
+  function createTooltip(card) {
+    const t = document.createElement('div');
+    t.className = 'tooltip';
+    t.innerText = `${card.name}\nElixir: ${card.elixirCost}\nRarity: ${card.rarity}`;
+    document.body.appendChild(t);
+    t.style.opacity = 1;
+    return t;
+  }
+
+  function moveTooltip(t, e) {
+    const padding = 10;
+    const rect = t.getBoundingClientRect();
+    let x = e.clientX + padding;
+    let y = e.clientY + padding;
+    if (x + rect.width > window.innerWidth) x = e.clientX - rect.width - padding;
+    if (y + rect.height > window.innerHeight) y = e.clientY - rect.height - padding;
+    t.style.left = x + 'px';
+    t.style.top = y + 'px';
+  }
 
   // Render all cards
   cardsData.forEach(card => {
@@ -97,12 +128,15 @@ function initDeckBuilder(cardsData) {
     cardDiv.innerHTML = `<img src="${card.iconUrls.medium}" title="${card.name}">`;
     allCardsDiv.appendChild(cardDiv);
 
+    // Tooltip events
+    cardDiv.addEventListener('mouseenter', e => { tooltip = createTooltip(card); });
+    cardDiv.addEventListener('mousemove', e => { if (tooltip) moveTooltip(tooltip, e); });
+    cardDiv.addEventListener('mouseleave', () => { if (tooltip) { tooltip.remove(); tooltip = null; } });
+
+    // Click to add to deck
     cardDiv.addEventListener('click', () => {
       if (deck.includes(card)) return; // prevent duplicates
-
-      // Find first empty slot (any slot)
-      let emptySlotIndex = deck.findIndex(s => s === null);
-
+      const emptySlotIndex = deck.findIndex(s => s === null);
       if (emptySlotIndex !== -1) {
         deck[emptySlotIndex] = card;
         renderDeck();
@@ -110,38 +144,34 @@ function initDeckBuilder(cardsData) {
     });
   });
 
-  // Render deck slots
   function renderDeck() {
     deckSlots.forEach((slot, i) => {
       slot.innerHTML = '';
       if (deck[i]) {
         const img = document.createElement('img');
-
-        // If slot is evolution and card has evolutionMedium, show evolved image
-        if (slot.classList.contains('evolution') && deck[i].iconUrls.evolutionMedium) {
-          img.src = deck[i].iconUrls.evolutionMedium;
-        } else {
-          img.src = deck[i].iconUrls.medium;
-        }
-
+        img.src = slot.classList.contains('evolution') && deck[i].iconUrls.evolutionMedium
+                  ? deck[i].iconUrls.evolutionMedium
+                  : deck[i].iconUrls.medium;
         slot.appendChild(img);
+
+        // Tooltip for deck slot
+        slot.onmouseenter = e => { tooltip = createTooltip(deck[i]); };
+        slot.onmousemove = e => { if (tooltip) moveTooltip(tooltip, e); };
+        slot.onmouseleave = () => { if (tooltip) { tooltip.remove(); tooltip = null; } };
       }
     });
 
-    // Update card availability
+    // Update used cards
     allCardsDiv.querySelectorAll('.card').forEach(cardDiv => {
       const cardName = cardDiv.querySelector('img').title;
       cardDiv.classList.toggle('used', deck.some(c => c && c.name === cardName));
     });
   }
 
-  // Remove card from slot if it is clicked
+  // Remove card on slot click
   deckSlots.forEach((slot, i) => {
     slot.addEventListener('click', () => {
-      if (deck[i]) {
-        deck[i] = null;
-        renderDeck();
-      }
+      if (deck[i]) { deck[i] = null; renderDeck(); }
     });
   });
 }
@@ -149,3 +179,4 @@ function initDeckBuilder(cardsData) {
 
 </body>
 </html>
+

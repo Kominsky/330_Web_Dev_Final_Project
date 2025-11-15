@@ -1,14 +1,151 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tests</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jakob K./Evan N. Clash Royale Deck Builder</title>
+<style>
+  body {
+    font-family: sans-serif;
+    margin: 20px;
+  }
+
+  h1, h3, h2{
+    text-align: center;
+  }
+
+  #deck-slots {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .slot {
+    width: 80px;
+    height: 120px;
+    border: 2px dashed #ccc;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    position: relative;
+  }
+
+  .slot.evolution { border-color: rgb(102, 0, 102); }
+
+  #all-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, 80px);
+    gap: 10px;
+  }
+
+  .card {
+    width: 80px;
+    height: 120px;
+    cursor: pointer;
+    border: 1px solid #ddd;
+    position: relative;
+  }
+
+  .card img { width: 100%; height: 100%; object-fit: contain; }
+
+  .card.used { opacity: 0.5; cursor: not-allowed; }
+
+  .slot img { width: 100%; height: 100%; object-fit: contain; }
+</style>
 </head>
 <body>
-    <h3>Test for github</h3>
-    <h1>Jakob Kominsky</h1>
-    <h2>Evan Neuman</h2>
-    <li>random</li>
+
+<h1>Clash Royale Deck Builder</h1>
+<h2>Jakob K./Evan N.</h2>
+
+<h3>Deck Slots</h3>
+<div id="deck-slots">
+  <!-- 6 normal slots -->
+  <div class="slot" data-index="0"></div>
+  <div class="slot" data-index="1"></div>
+  <div class="slot" data-index="2"></div>
+  <div class="slot" data-index="3"></div>
+  <div class="slot" data-index="4"></div>
+  <div class="slot" data-index="5"></div>
+  <!-- 2 evolution slots -->
+  <div class="slot evolution" data-index="6"></div>
+  <div class="slot evolution" data-index="7"></div>
+</div>
+
+<h3>All Cards</h3>
+<div id="all-cards"></div>
+
+<script>
+const deck = new Array(8).fill(null);
+
+fetch('cards-data.json')
+  .then(res => res.json())
+  .then(data => initDeckBuilder(data.items))
+  .catch(err => console.error('Error loading card data:', err));
+
+function initDeckBuilder(cardsData) {
+  const deckSlots = document.querySelectorAll('.slot');
+  const allCardsDiv = document.getElementById('all-cards');
+
+  // Render all cards
+  cardsData.forEach(card => {
+    const cardDiv = document.createElement('div');
+    cardDiv.className = 'card';
+    cardDiv.innerHTML = `<img src="${card.iconUrls.medium}" title="${card.name}">`;
+    allCardsDiv.appendChild(cardDiv);
+
+    cardDiv.addEventListener('click', () => {
+      if (deck.includes(card)) return; // prevent duplicates
+
+      // Find first empty slot (any slot)
+      let emptySlotIndex = deck.findIndex(s => s === null);
+
+      if (emptySlotIndex !== -1) {
+        deck[emptySlotIndex] = card;
+        renderDeck();
+      }
+    });
+  });
+
+  // Render deck slots
+  function renderDeck() {
+    deckSlots.forEach((slot, i) => {
+      slot.innerHTML = '';
+      if (deck[i]) {
+        const img = document.createElement('img');
+
+        // If slot is evolution and card has evolutionMedium, show evolved image
+        if (slot.classList.contains('evolution') && deck[i].iconUrls.evolutionMedium) {
+          img.src = deck[i].iconUrls.evolutionMedium;
+        } else {
+          img.src = deck[i].iconUrls.medium;
+        }
+
+        slot.appendChild(img);
+      }
+    });
+
+    // Update card availability
+    allCardsDiv.querySelectorAll('.card').forEach(cardDiv => {
+      const cardName = cardDiv.querySelector('img').title;
+      cardDiv.classList.toggle('used', deck.some(c => c && c.name === cardName));
+    });
+  }
+
+  // Remove card from slot if it is clicked
+  deckSlots.forEach((slot, i) => {
+    slot.addEventListener('click', () => {
+      if (deck[i]) {
+        deck[i] = null;
+        renderDeck();
+      }
+    });
+  });
+}
+</script>
+
 </body>
 </html>

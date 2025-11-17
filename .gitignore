@@ -1,0 +1,5 @@
+#ignore npm packages, environment variables, system files, log files
+node_modules/
+.env
+.DS_Store
+*.log

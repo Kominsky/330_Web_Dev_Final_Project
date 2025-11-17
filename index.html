@@ -17,7 +17,7 @@
   #deck-slots {
     display: flex;
     gap: 10px;
-    margin-bottom: 20px;
+    margin-bottom: 10px;
     justify-content: center;
     flex-wrap: wrap;
   }
@@ -39,6 +39,7 @@
     display: grid;
     grid-template-columns: repeat(auto-fill, 80px);
     gap: 10px;
+    margin-top: 20px;
   }
 
   .card {
@@ -66,6 +67,20 @@
     opacity: 0;
     transition: opacity 0.05s;
   }
+
+  #deck-rating {
+    text-align: center;
+    font-weight: bold;
+    margin-bottom: 20px;
+  }
+
+  #megaknight-warning {
+    text-align: center;
+    color: darkred;
+    font-weight: bold;
+    margin-bottom: 10px;
+    display: none;
+  }
 </style>
 </head>
 <body>
@@ -85,6 +100,9 @@
   <div class="slot evolution" data-index="7"></div>
 </div>
 
+<div id="megaknight-warning">MegaKnight? Alright, so we are making a no skill deck</div>
+<div id="deck-rating">Deck Rating: 0/100</div>
+
 <h3>All Cards</h3>
 <div id="all-cards"></div>
 
@@ -100,7 +118,9 @@ fetch('cards-data.json')
 function initDeckBuilder(cardsData) {
   const deckSlots = document.querySelectorAll('.slot');
   const allCardsDiv = document.getElementById('all-cards');
-// Cards stats displayed in tooltip
+  const ratingDiv = document.getElementById('deck-rating');
+  const megaknightWarning = document.getElementById('megaknight-warning');
+
   function createTooltip(card) {
     const t = document.createElement('div');
     t.className = 'tooltip';
@@ -119,6 +139,67 @@ function initDeckBuilder(cardsData) {
     if (y + rect.height > window.innerHeight) y = e.clientY - rect.height - padding;
     t.style.left = x + 'px';
     t.style.top = y + 'px';
+  }
+
+  function renderDeck() {
+    deckSlots.forEach((slot, i) => {
+      slot.innerHTML = '';
+      if (deck[i]) {
+        const img = document.createElement('img');
+        img.src = slot.classList.contains('evolution') && deck[i].iconUrls.evolutionMedium
+                  ? deck[i].iconUrls.evolutionMedium
+                  : deck[i].iconUrls.medium;
+        slot.appendChild(img);
+
+        // Tooltip for deck slot
+        slot.onmouseenter = e => { tooltip = createTooltip(deck[i]); };
+        slot.onmousemove = e => { if (tooltip) moveTooltip(tooltip, e); };
+        slot.onmouseleave = () => { if (tooltip) { tooltip.remove(); tooltip = null; } };
+      }
+    });
+
+    // Update used cards
+    allCardsDiv.querySelectorAll('.card').forEach(cardDiv => {
+      const cardName = cardDiv.querySelector('img').title;
+      cardDiv.classList.toggle('used', deck.some(c => c && c.name === cardName));
+    });
+
+    // Update deck rating
+    updateDeckRating();
+  }
+
+  function updateDeckRating() {
+    let score = 0;
+    let filledCards = deck.filter(c => c !== null);
+
+    // Base score based on number of cards
+    score = Math.floor((filledCards.length / 8) * 50);
+
+    // Bonus for average elixir in safe range
+    if (filledCards.length > 0) {
+      const avgElixir = filledCards.reduce((sum, c) => sum + c.elixirCost, 0) / filledCards.length;
+      if (avgElixir >= 3 && avgElixir <= 5) score += 10;
+    }
+
+    // Bonus for rarities
+    filledCards.forEach(c => {
+      if (c.rarity === 'rare') score += 5;
+      else if (c.rarity === 'epic') score += 10;
+      else if (c.rarity === 'legendary') score += 15;
+    });
+
+    // Bonus for evolution slots filled
+    if (deck[6] && deck[7]) score += 10;
+
+    // Cap score 0-100
+    score = Math.max(0, Math.min(100, score));
+    ratingDiv.innerText = `Deck Rating: ${score}/100`;
+
+    // Megaknight warning (becasue why use that shit card)
+    const hasMegaknight = filledCards.some(c =>
+      c.name.toLowerCase().includes('mega') && c.name.toLowerCase().includes('knight')
+    );
+    megaknightWarning.style.display = hasMegaknight ? 'block' : 'none';
   }
 
   // Render all cards
@@ -143,30 +224,6 @@ function initDeckBuilder(cardsData) {
       }
     });
   });
-
-  function renderDeck() {
-    deckSlots.forEach((slot, i) => {
-      slot.innerHTML = '';
-      if (deck[i]) {
-        const img = document.createElement('img');
-        img.src = slot.classList.contains('evolution') && deck[i].iconUrls.evolutionMedium
-                  ? deck[i].iconUrls.evolutionMedium
-                  : deck[i].iconUrls.medium;
-        slot.appendChild(img);
-
-        // Tooltip for deck slot
-        slot.onmouseenter = e => { tooltip = createTooltip(deck[i]); };
-        slot.onmousemove = e => { if (tooltip) moveTooltip(tooltip, e); };
-        slot.onmouseleave = () => { if (tooltip) { tooltip.remove(); tooltip = null; } };
-      }
-    });
-
-    // Update used cards
-    allCardsDiv.querySelectorAll('.card').forEach(cardDiv => {
-      const cardName = cardDiv.querySelector('img').title;
-      cardDiv.classList.toggle('used', deck.some(c => c && c.name === cardName));
-    });
-  }
 
   // Remove card on slot click
   deckSlots.forEach((slot, i) => {

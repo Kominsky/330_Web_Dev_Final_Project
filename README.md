@@ -1,4 +1,4 @@
-#Clash Royal Deck Builder
+# Clash Royal Deck Builder
 
 A web application that allows users to build analyze and optimize Clash Royale decks with deck analysis and suggestions.
 
@@ -7,7 +7,7 @@ A web application that allows users to build analyze and optimize Clash Royale d
 
 ---
 
-##Project Overview
+## Project Overview
 
 This deck builder help Clash Royal players create competitive decks by providing:
 - Interactive drag-and -drop card selection
@@ -18,7 +18,7 @@ This deck builder help Clash Royal players create competitive decks by providing
 
 ---
 
-##Features
+## Features
 
 - **Interactive Deck Building**: Drag-and-drop or click to add cards to your 8-card deck
 - **Card Library**: Browse all Clash Royale cards with filtering options (Ground/Air)
@@ -31,22 +31,22 @@ This deck builder help Clash Royal players create competitive decks by providing
 
 ---
 
-##Tech Stack
+## Tech Stack
 
-###Frontend
+### Frontend
 - **React** - Component-based UI framework
 - **JavaScript** - Core programming language
 - **CSS3** - Styling and animations
 - **HTML5** - Structure and markup
 
-###Backend
+### Backend
 - **Node.js** - Runtime environment
 - **Express.js** - Web application framework
 
-###APIs & Data
+### APIs & Data
 - **Clash Royale API** - Official game data source
 - **JSON** - Data storage and transfer format
 
-###Development Tools
+### Development Tools
 - **npm** - Package management
 - **Git** - Version control

@@ -2,7 +2,7 @@
 
 A web application that allows users to build analyze and optimize Clash Royale decks with deck analysis and suggestions.
 
-**Created By:** Jakob Kominsky & Evan Neuman
+**Created By:** Jakob Kominsky & Evan Neuman\
 **Course:** Web Development 330 Final Project
 
 ---

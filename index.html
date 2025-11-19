@@ -18,7 +18,15 @@
     text-align: center;
     font-size: 1.2rem;
     font-weight: bold;
+    margin-bottom: 5px;
+  }
+
+  /* NEW — Elixir counter */
+  #avg-elixir {
+    text-align: center;
+    font-size: 1.1rem;
     margin-bottom: 10px;
+    font-weight: bold;
   }
 
   #megaknight-warning {
@@ -117,6 +125,9 @@
 <div id="megaknight-warning">Really? You wanna add Mega Knight?</div>
 <div id="deck-rating">Deck Rating: N/A</div>
 
+<!-- NEW: Elixir Display -->
+<div id="avg-elixir">Average Elixir: N/A</div>
+
 <div id="deck-slots">
   <div class="slot" data-index="0"></div>
   <div class="slot" data-index="1"></div>
@@ -165,21 +176,17 @@ function renderCards(filter="all") {
       div.innerHTML = `<img src="${card.iconUrls.medium}" title="${card.name}" draggable="true">`;
       allCardsDiv.appendChild(div);
 
-      // Click to add
       div.addEventListener("click", () => addCard(card));
 
-      // Drag events
       div.addEventListener("dragstart", e => {
         e.dataTransfer.setData("text/plain", card.name);
       });
 
-      // Tooltip
       div.addEventListener("mouseenter", e => showTooltip(card, e));
       div.addEventListener("mousemove", e => moveTooltip(e));
       div.addEventListener("mouseleave", hideTooltip);
     });
 
-  // Update used state
   allCardsDiv.querySelectorAll(".card").forEach(div => {
     const name = div.querySelector("img").title;
     div.classList.toggle("used", deck.some(c => c && c.name === name));
@@ -215,7 +222,6 @@ function moveTooltip(e) {
 
 function hideTooltip() { if (tooltip) { tooltip.remove(); tooltip = null; } }
 
-// Deck management
 const deckSlots = document.querySelectorAll(".slot");
 deckSlots.forEach((slot, i) => {
   slot.addEventListener("click", () => { if(deck[i]) { deck[i]=null; renderDeck(); } });
@@ -249,7 +255,6 @@ function renderDeck() {
       : card.iconUrls.medium;
     slot.appendChild(img);
 
-    // Deck slot tooltip
     slot.onmouseenter = e => { showTooltip(card, e); };
     slot.onmousemove = e => moveTooltip(e);
     slot.onmouseleave = hideTooltip;
@@ -261,6 +266,7 @@ function renderDeck() {
   });
 
   updateRating();
+  updateAverageElixir();   // NEW
   checkMegaKnight();
 }
 
@@ -272,7 +278,22 @@ function updateRating() {
   ratingEl.textContent = "Deck Rating: "+score+"/100";
 }
 
-// Mega Knight warning
+/* NEW — Average Elixir calculation */
+function updateAverageElixir() {
+  const avgElixirEl = document.getElementById("avg-elixir");
+
+  const filled = deck.filter(c => c !== null);
+  if (filled.length === 0) {
+    avgElixirEl.textContent = "Average Elixir: N/A";
+    return;
+  }
+
+  const total = filled.reduce((sum, c) => sum + c.elixirCost, 0);
+  const avg = (total / filled.length).toFixed(1);
+
+  avgElixirEl.textContent = "Average Elixir: " + avg;
+}
+
 function checkMegaKnight() {
   const mk = deck.some(c => c && c.name.toLowerCase()==="mega knight");
   document.getElementById("megaknight-warning").style.visibility = mk ? "visible" : "hidden";

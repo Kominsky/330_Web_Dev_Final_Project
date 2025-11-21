@@ -34,7 +34,6 @@ This deck builder help Clash Royal players create competitive decks by providing
 ## Tech Stack
 
 ### Frontend
-- **React** - Component-based UI framework
 - **JavaScript** - Core programming language
 - **CSS3** - Styling and animations
 - **HTML5** - Structure and markup
